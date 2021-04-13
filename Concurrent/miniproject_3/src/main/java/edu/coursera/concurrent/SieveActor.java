@@ -1,7 +1,13 @@
 package edu.coursera.concurrent;
 
+import java.time.Instant;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
+
 import edu.rice.pcdp.Actor;
 
+import static edu.rice.pcdp.PCDP.finish;
 /**
  * An actor-based implementation of the Sieve of Eratosthenes.
  *
@@ -9,24 +15,48 @@ import edu.rice.pcdp.Actor;
  * countPrimes to determin the number of primes <= limit.
  */
 public final class SieveActor extends Sieve {
+
     /**
      * {@inheritDoc}
      *
-     * TODO Use the SieveActorActor class to calculate the number of primes <=
-     * limit in parallel. You might consider how you can model the Sieve of
-     * Eratosthenes as a pipeline of actors, each corresponding to a single
-     * prime number.
+     * TODO Use the SieveActorActor class to calculate the number of primes <= limit
+     * in parallel. You might consider how you can model the Sieve of Eratosthenes
+     * as a pipeline of actors, each corresponding to a single prime number.
      */
     @Override
     public int countPrimes(final int limit) {
-        throw new UnsupportedOperationException();
+        // throw new UnsupportedOperationException();
+        SieveActorActor sieveActor = new SieveActorActor(2);
+
+        finish(() -> {
+            for (int i = 3; i <= limit; i+=2) {
+                sieveActor.send(i);
+            }
+            sieveActor.send(0);
+        });
+
+        int numPrimes = 0;
+        SieveActorActor loopActor = sieveActor;
+        while (loopActor != null) {
+            numPrimes += loopActor.getNumLocalPrimes();
+            loopActor = loopActor.nextActor;
+        }
+        return numPrimes;
     }
 
     /**
-     * An actor class that helps implement the Sieve of Eratosthenes in
-     * parallel.
+     * An actor class that helps implement the Sieve of Eratosthenes in parallel.
      */
     public static final class SieveActorActor extends Actor {
+        // local states
+        private static final int MAX_LOCAL_PRIMES = 1000;
+        private SieveActorActor nextActor = null;
+        private Set<Integer> localPrimes = new HashSet<>(MAX_LOCAL_PRIMES);
+
+        public SieveActorActor(int localPrime) {
+            this.localPrimes.add(localPrime);
+        }
+
         /**
          * Process a single message sent to this actor.
          *
@@ -36,7 +66,40 @@ public final class SieveActor extends Sieve {
          */
         @Override
         public void process(final Object msg) {
-            throw new UnsupportedOperationException();
+            final int candidate = (Integer) msg;
+            if (candidate <= 0) {
+                if (nextActor != null) {
+                    nextActor.send(msg);
+                }
+                return;
+            } else {
+                final boolean locallyPrime = isLocalPrime(candidate);
+
+                if (locallyPrime) {
+                    if (getNumLocalPrimes() < MAX_LOCAL_PRIMES) {
+                        localPrimes.add(candidate);
+                    } else {
+                        if (nextActor == null) {
+                            System.out.println(" create new Actor for: "+ candidate + "\t, at: " +  Instant.now().toEpochMilli());
+                            nextActor = new SieveActorActor(candidate);
+                        }
+                        nextActor.send(msg);
+                    }
+                }
+            }
+        }
+
+        boolean isLocalPrime(int candidate) {
+            for (int prime : localPrimes) {
+                if (candidate % prime == 0) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        public int getNumLocalPrimes() {
+            return localPrimes.size();
         }
     }
 }
