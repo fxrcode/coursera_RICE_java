@@ -15,6 +15,11 @@ import static edu.rice.pcdp.PCDP.finish;
  * countPrimes to determin the number of primes <= limit.
  */
 public final class SieveActor extends Sieve {
+    public static void main(String[] args) {
+        int limit = 20_000;
+        int totalPrimes = new SieveActor().countPrimes(limit);
+        System.out.println("Total primes: " + totalPrimes);
+    }
 
     /**
      * {@inheritDoc}
@@ -38,6 +43,8 @@ public final class SieveActor extends Sieve {
         int numPrimes = 0;
         SieveActorActor loopActor = sieveActor;
         while (loopActor != null) {
+            System.out.println( loopActor.getActorPrimeId() );
+
             numPrimes += loopActor.getNumLocalPrimes();
             loopActor = loopActor.nextActor;
         }
@@ -52,9 +59,15 @@ public final class SieveActor extends Sieve {
         private static final int MAX_LOCAL_PRIMES = 1000;
         private SieveActorActor nextActor = null;
         private Set<Integer> localPrimes = new HashSet<>(MAX_LOCAL_PRIMES);
+        private int actorPrimeId;
 
         public SieveActorActor(int localPrime) {
             this.localPrimes.add(localPrime);
+            this.actorPrimeId = localPrime;
+        }
+
+        public int getActorPrimeId() {
+            return actorPrimeId;
         }
 
         /**
@@ -80,7 +93,7 @@ public final class SieveActor extends Sieve {
                         localPrimes.add(candidate);
                     } else {
                         if (nextActor == null) {
-                            System.out.println(" create new Actor for: "+ candidate + "\t, at: " +  Instant.now().toEpochMilli());
+                            // System.out.println(" create new Actor for: "+ candidate + "\t, at: " +  Instant.now().toEpochMilli());
                             nextActor = new SieveActorActor(candidate);
                         }
                         nextActor.send(msg);
