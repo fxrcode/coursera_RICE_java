@@ -43,7 +43,7 @@ public final class SieveActor extends Sieve {
         int numPrimes = 0;
         SieveActorActor loopActor = sieveActor;
         while (loopActor != null) {
-            System.out.println( loopActor.getActorPrimeId() );
+            System.out.println("This loopActor's starting localprime:\t" + loopActor.getActorPrimeId() );
 
             numPrimes += loopActor.getNumLocalPrimes();
             loopActor = loopActor.nextActor;
