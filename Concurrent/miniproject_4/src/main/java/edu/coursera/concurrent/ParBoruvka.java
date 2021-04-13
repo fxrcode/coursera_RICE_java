@@ -8,6 +8,7 @@ import edu.coursera.concurrent.boruvka.Component;
 import java.util.Queue;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * A parallel implementation of Boruvka's algorithm to compute a Minimum
@@ -23,12 +24,55 @@ public final class ParBoruvka extends AbstractBoruvka<ParBoruvka.ParComponent> {
     }
 
     /**
+     * TODO: Your main goal for this assignment is to complete the computeBoruvka method
      * {@inheritDoc}
      */
     @Override
     public void computeBoruvka(final Queue<ParComponent> nodesLoaded,
             final SolutionToBoruvka<ParComponent> solution) {
-        throw new UnsupportedOperationException();
+        ParComponent n = null;
+
+        while ((n = nodesLoaded.poll()) != null) {
+            // Safe to parallelize two iterations working on disjoint (n, other) pairs if work list is thread-safe.
+            if (!n.lock.tryLock()) {
+                // don't re-add, another thread must be working on it
+                continue;
+            }
+
+            if (n.isDead) {
+                n.lock.unlock();
+                continue; // node n has already been merged
+            }
+            final Edge<ParComponent> e = n.getMinEdge(); // retrieve n's edge with minimum weight
+            if (e == null) {
+                solution.setSolution(n);
+                break;
+            }
+            final ParComponent other = e.getOther(n);
+
+            if (!other.lock.tryLock()) {
+                n.lock.unlock();
+                nodesLoaded.add(n);
+                continue;
+            }
+
+            if (other.isDead) {
+                other.lock.unlock();
+                n.lock.unlock();
+//                nodesLoaded.add(n);
+                continue;
+            }
+
+            other.isDead = true;
+            // merge node other into node n
+            n.merge(other, e.weight());
+
+            n.lock.unlock();
+            other.lock.unlock();
+
+            // add newly merged n back in the work-list
+            nodesLoaded.add(n);
+        }
     }
 
     /**
@@ -37,6 +81,8 @@ public final class ParBoruvka extends AbstractBoruvka<ParBoruvka.ParComponent> {
      * result of collapsing edges to form a component from multiple nodes.
      */
     public static final class ParComponent extends Component<ParComponent> {
+        // TODO: add object lock
+        private final ReentrantLock lock = new ReentrantLock();
         /**
          *  A unique identifier for this component in the graph that contains
          *  it.
