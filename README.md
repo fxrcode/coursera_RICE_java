@@ -3,6 +3,9 @@
 * Vivek Sarkar
 
 ## Parallel Programming in Java
+* [x] Mini Project 1: Reciprocal-Array-Sum using the Java Fork/Join Framework
+* [x] Mini Project 2: Analyzing Student Statistics Using Java Parallel Streams
+* [x] Mini Project 3: Parallelizing Matrix-Matrix Multiply Using Loop Parallelism
 
 ## Concurrent Programming in Java
 * [x] Mini Project 1: Locking and Synchronization
