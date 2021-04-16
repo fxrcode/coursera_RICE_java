@@ -16,3 +16,7 @@
 * [x] Mini Project 4: Parallelization of Boruvka's Minimum Spanning Tree Algorithm
   
 ## Distributed Programming in Java
+* [x] Mini Project 1: Page Rank with Spark
+  * this is coool
+* [x] Mini Project 2: File Server
+
