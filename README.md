@@ -19,4 +19,5 @@
 * [x] Mini Project 1: Page Rank with Spark
   * this is coool
 * [x] Mini Project 2: File Server
+* [x] Mini Project 3: Matrix Multiply in MPI
 
